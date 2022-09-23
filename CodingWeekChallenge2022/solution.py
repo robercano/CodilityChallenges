@@ -4,30 +4,31 @@ class Node:
         self.parity = 0
         self.visited = False
 
-def updateEvenOdd(currentNode, previousNode, new_odd, new_even):
-    if new_odd == 0 and new_even == 0:
-        return
-        
-    currentNode.num_connected_odd += new_odd
-    currentNode.num_connected_even += new_even
-
-    for next in currentNode.nexts:
-        if (next != previousNode):
-            updateEvenOdd(next, currentNode, new_even, new_odd)
-
-def printNodes(nodes):
-    print ("Graph Degrees:")
-    for node in nodes:
-        print(len(node.nexts))
-
 def createGraph(A, B):
     nodes = [Node() for i in range(len(A) + 1)]
 
+    isPureStar = True
+    possibleStar = None
+
     for i in range(len(A)):
+        if len(nodes[A[i]].nexts) >= 1:
+            if possibleStar != None:
+                if possibleStar != A[i]:
+                    isPureStar = False
+            else:
+                possibleStar = A[i]
+
+        if len(nodes[B[i]].nexts) >= 1:
+            if possibleStar != None:
+                if possibleStar != B[i]:
+                    isPureStar = False
+            else:
+                possibleStar = B[i]
+
         nodes[A[i]].nexts.append(nodes[B[i]])
         nodes[B[i]].nexts.append(nodes[A[i]])
     
-    return nodes
+    return nodes, isPureStar
 
 def findNodeWithGrade(nodes, grade):
     for node in nodes:
@@ -74,10 +75,12 @@ def solution(A, B):
     if (len(A) == 2):
         return 2
         
-    nodes = createGraph(A, B)
+    nodes, isPureStar = createGraph(A, B)
+
+    if isPureStar:
+        return len(nodes) - 1;
 
     root = findNodeWithGrade(nodes, 1)
-
     totalOdd = calculateTotalOdd(root)
 
     return (len(nodes) - totalOdd)*totalOdd
