@@ -228,14 +228,21 @@ def blockPrint():
 def enablePrint():
     sys.stdout = sys.__stdout__
 
-TestCases = [['aabacbba', 6],['aabxbaba', 6],
-                 ['xxxyxxyyyxyyy', 11], ['atheaxbtheb', 5],
-                 ['aaaaabaaaa', 10], ['qwqertyiuiqoipa', 6],
-                 ['yyyxxxyxxyyyxyyy', 14], ['abcabcabcabc', 6],
-                 ['abcabcabcabca', 6], ['yyyxbzzzxbyyyxbzzzyybyyyxbzzz', 15],
-                 ['dadadbdacacacbc', 9], ['xjojojooojojox', 9],
-                 ['xjojojooojojo', 9]]
-#TestCases = [['yyyxbzzzxbyyyxbzzzyybyyyxbzzz', 15]]
+TestCases = [['aabacbba', 6],
+             ['aabxbaba', 6],
+             ['aabxabxba', 6],
+             ['xxxyxxyyyxyyy', 11],
+             ['atheaxbtheb', 5],
+             ['aaaaabaaaa', 10],
+             ['qwqertyiuiqoipa', 6],
+             ['yyyxxxyxxyyyxyyy', 14],
+             ['abcabcabcabc', 6],
+             ['abcabcabcabca', 6],
+             ['yyyxbzzzxbyyyxbzzzyybyyyxbzzz', 15],
+             ['dadadbdacacacbc', 9],
+             ['xjojojooojojox', 9],
+             ['xjojojooojojo', 9],
+             ['zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbabbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaazzzzzzzzzzzzzzzzzzzzzzzzzzzzzz', 101]]
 
 for test in TestCases:
  
@@ -258,5 +265,4 @@ for test in TestCases:
         print("OK!")
     else:
         print("ERROR! (expected: " + str(expected) + ")" + " (result: " + str(result) + ")")
-        break
-
+        print(graph)
