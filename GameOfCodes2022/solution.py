@@ -1,16 +1,19 @@
-
 import sys, os
 import copy
 
 class Node:
-    def __init__(self, letter, count, prev, next=None):
+    def __init__(self, letter, count, id, prev, next=None):
         self.letter = letter
         self.count = count
         self.prev = prev
         self.next = next
+        self.id = id
 
     def __str__(self) -> str:
-        return '[' + self.letter + ',' + str(self.count) + ']';
+        return '[' + str(self.id) + ',' + self.letter + ',' + str(self.count) + ']';
+
+    def __eq__(self, other) -> bool:
+        return other != None and self.id == other.id
 
 class Graph:
     def __init__(self, S):
@@ -18,15 +21,18 @@ class Graph:
         self.tail = None
         self.num_nodes = 0
         self.reversed = False
+        self.id_counter = 0
 
         self.__build__(S)
 
     def append(self, letter, count):
+        self.id_counter += 1
+
         if self.head == None:
-            self.head = Node(letter, count, None)
+            self.head = Node(letter, count, self.id_counter, None)
             self.tail = self.head
         else:
-            self.tail.next = Node(letter, count, self.tail)
+            self.tail.next = Node(letter, count, self.id_counter, self.tail)
             self.tail = self.tail.next
 
         self.num_nodes += 1
@@ -43,12 +49,18 @@ class Graph:
 
         self.num_nodes -= 1
 
-    def removeRange(self, fromNode, toNode):
-        node = fromNode
-        while node != None and node != toNode:
-            nextNode = node.next
+    def removeRange(self, fromNode, toNode, excludeFrom=False, excludeTo=False):
+        iter = self.iterFrom(fromNode)
+        if excludeFrom:
+            next(iter)
+
+        for node in iter:
+            if node == toNode:
+                if excludeTo == False:
+                    self.remove(node)
+                break
+                
             self.remove(node)
-            node = nextNode
 
     def iterFrom(self, node):
         return GraphIterator(self, node)
@@ -118,8 +130,9 @@ def collapse_nodes(graph, fromNode):
     max_group_count = 0
     num_groups_to_remove = 0
 
-    print('graph:' + str(graph))
-    print('fromNode: ' + str(fromNode))
+    print('      [COLLAPSE NODES]')
+    print('        g: ' + str(graph))
+    print('        n: ' + str(fromNode))
 
     for node in graph.iterFrom(fromNode):
         if node == fromNode:
@@ -129,10 +142,13 @@ def collapse_nodes(graph, fromNode):
             if node.count < max_group_count or len(graph) - num_groups_to_remove < 3:
                 return False
 
-            fromNode.count += node.count
-            fromNode.next = node.next
+            print('        removeRange(' + str(fromNode) + ',' + str(node) + ')')
 
-            graph.removeRange(fromNode.next, node)
+            fromNode.count += node.count
+
+            graph.removeRange(fromNode, node, excludeFrom=True)
+
+            print('        graph after remove:' + str(graph))
 
             return True
         else:
@@ -151,18 +167,28 @@ def collapse_nodes(graph, fromNode):
     
     return False
 
-def reduce_group(graph, fromNode):
-    print('reduce right ' + str(graph))
+def collapse_one_node(graph, fromNode):
+    print('  [COLLAPSE]')
+    print('    g: ' + str(graph))
+    print('    n: ' + str(fromNode))
+    print('    [REDUCE RIGHT]')
     while collapse_nodes(graph, fromNode):
         continue
     
     graph.reverse()
 
-    print('reduce left')
+    print('    [REDUCE LEFT]')
     while collapse_nodes(graph, fromNode):
         continue
 
     graph.reverse()
+
+def find_max_node(graph, exclusion_list):
+    reduced_graph = filter(lambda node: node not in exclusion_list, graph)
+    try:
+        return max(reduced_graph, key=lambda node: node.count)
+    except ValueError:
+        return None
 
 def reduce_graph(graph):
     exclusion_list = []
@@ -170,14 +196,16 @@ def reduce_graph(graph):
         if len(graph) <= 3:
             break
 
-        reduced_graph = filter(lambda node: node not in exclusion_list, graph)
-        biggest_node = max(reduced_graph, key=lambda node: node.count)
-
+        max_node = find_max_node(graph, exclusion_list)
+        if max_node == None:
+            break
+        
         length_before = len(graph)
-        reduce_group(graph, biggest_node)
+        collapse_one_node(graph, max_node)
+        length_after = len(graph)
 
-        if length_before == len(graph):
-            exclusion_list.append(biggest_node)
+        if length_before == length_after:
+            exclusion_list.append(max_node)
         else:
             exclusion_list = []
 
@@ -185,18 +213,12 @@ def solution(S):
     graph = Graph(S)
 
     reduce_graph(graph)
-    return 0
-    print(end='\n')
-    sorted_groups = sorted(groups_list, key=lambda x: x.count, reverse=True)
-    print('sorted_groups_list: ', end='')
-    print_list(sorted_groups)
-    print(end='\n')
+
+    sorted_groups = sorted(list(graph), key=lambda x: x.count, reverse=True)
     first_three_groups = sorted_groups[:3]
     first_three_counts = [group.count for group in first_three_groups]
     
-    print_graph(head)
-
-    return sum(first_three_counts), head
+    return sum(first_three_counts), graph
 
 # Disable
 def blockPrint():
@@ -206,22 +228,22 @@ def blockPrint():
 def enablePrint():
     sys.stdout = sys.__stdout__
 
-# TestCases = [['aabacbba', 6],['aabxbaba', 6],
-#                  ['xxxyxxyyyxyyy', 11], ['atheaxbtheb', 5],
-#                  ['aaaaabaaaa', 10], ['qwqertyiuiqoipa', 6],
-#                  ['yyyxxxyxxyyyxyyy', 14], ['abcabcabcabc', 6],
-#                  ['abcabcabcabca', 6], ['yyyxbzzzxbyyyxbzzzyybyyyxbzzz', 15],
-#                  ['dadadbdacacacbc', 9], ['xjojojooojojox', 9],
-#                  ['xjojojooojojo', 9]]
-TestCases = [['yyyxbzzzxbyyyxbzzzyybyyyxbzzz', 15]]
+TestCases = [['aabacbba', 6],['aabxbaba', 6],
+                 ['xxxyxxyyyxyyy', 11], ['atheaxbtheb', 5],
+                 ['aaaaabaaaa', 10], ['qwqertyiuiqoipa', 6],
+                 ['yyyxxxyxxyyyxyyy', 14], ['abcabcabcabc', 6],
+                 ['abcabcabcabca', 6], ['yyyxbzzzxbyyyxbzzzyybyyyxbzzz', 15],
+                 ['dadadbdacacacbc', 9], ['xjojojooojojox', 9],
+                 ['xjojojooojojo', 9]]
+#TestCases = [['yyyxbzzzxbyyyxbzzzyybyyyxbzzz', 15]]
 
 for test in TestCases:
  
-    #blockPrint()
+    blockPrint()
     print('----------------------')
     print('String: ' + test[0])
 
-    result, head = solution(test[0])
+    result, graph = solution(test[0])
 
     print('Result: ' + str(result))
     print('Expected: ' + str(test[1]))
@@ -236,6 +258,5 @@ for test in TestCases:
         print("OK!")
     else:
         print("ERROR! (expected: " + str(expected) + ")" + " (result: " + str(result) + ")")
-        print_graph(head)
         break
 
