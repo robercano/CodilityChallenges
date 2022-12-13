@@ -1,62 +1,21 @@
-class Block:
-    def __init__(self, size, letter):
-        self.size = size
-        self.letter = letter
-
-
-def get_basic_blocks(S):
-    allBlock = []
-
-    currentLetter = ''
-    currentBlock = None
-
-    # Collapse trivial blocks
-    for i in range(len(S)):
-        if S[i] == currentLetter:
-            currentBlock.size += 1
-        else:
-            currentBlock = Block(1, S[i])
-            allBlock.append(currentBlock)
-            currentLetter = S[i]
-
-    return allBlock
+# Based on siakhooi solution
 
 def solution(S: str) -> int:
-    allBlock = get_basic_blocks(S)
-
     letters = [chr(x) for x in range(ord('a'), ord('z') + 1)]
-    lastBlock = {k: [None, None, None, None] for k in letters}
-    lastBlockLength = {k: [0, 0, 0, 0] for k in letters}
+    blockLength = {k: [0, 0, 0] for k in letters}
+    maxLength = [-1, -1, -1]
 
-    maxLengthBefore = [-1, -1, -1, 0]
+    for letter in S:
+        cachedMaxLength = maxLength.copy()
 
-    for i in range(len(allBlock)):
-        b = allBlock[i]
+        for j in range(0, 3):
+            combineLength = blockLength[letter][j] + 1
+            appendLength = cachedMaxLength[j-1] + 1 if j > 0 else 1
 
-        for j in range(4):
-            if maxLengthBefore[j] == -1:
-                continue
-
-            currentMax = maxLengthBefore[j]
-
-            # combine from last
-            if lastBlock[b.letter][j] != None:
-                combineLength = lastBlockLength[b.letter][j] + b.size
-                
-                maxLengthBefore[j] = max(currentMax, combineLength)
-                
-                lastBlock[b.letter][j] = b
-                lastBlockLength[b.letter][j] = combineLength
-
-            if j > 0: # stay
-                combineLength = currentMax + b.size
-                
-                maxLengthBefore[j - 1] = max(maxLengthBefore[j - 1], combineLength)
-
-                lastBlock[b.letter][j - 1] = b
-                lastBlockLength[b.letter][j - 1] = max(lastBlockLength[b.letter][j - 1], combineLength)
-
-    return max(maxLengthBefore[0], maxLengthBefore[1], maxLengthBefore[2], maxLengthBefore[3])
+            maxLength[j] = max(maxLength[j], combineLength, appendLength)
+            blockLength[letter][j] = max(blockLength[letter][j], combineLength, appendLength)
+        
+    return max(maxLength)
 
 TestCases = [['aabacbba', 6],
              ['aabxbaba', 6],
