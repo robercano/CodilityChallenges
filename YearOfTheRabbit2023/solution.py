@@ -1,25 +1,10 @@
-
-def crange(start, end, modulo):
-    for i in range(start,end):
-        yield i % modulo
-
-def brute_force(A, B):
-    N = len(A)
-    for i in range(N):
-        found = True
-        position=0
-        for j in crange(N-i, N-i+N, N):
-            if A[position] == B[j]:
-                found=False
-                break
-            position+=1
-        if found:
+def solution(A, B):
+    for i in range(len(A)):
+        if not [True for a,b in zip(A,B) if a == b]:
             return i
-
+        B = [B[-1]] + B[0:-1]
     return -1
 
-def solution(A, B):
-    return brute_force(A, B)
 
 TestCases = [[[1,3,5,2,8,7], [7,1,9,8,5,7], 2],
              [[1,1,1,1], [1,2,3,4], -1],
