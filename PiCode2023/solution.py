@@ -1,50 +1,119 @@
+import sys
+import os
+
+import copy
+
+class Group:
+    def __init__(self, letterA, letterB, count):
+        self.letters = { letterA: letterB, letterB: letterA }
+        self.count = count
+
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+    
+    def __str__(self):
+        return str(self.letters) + " -> " + str(self.count)
+    
+    def __repr__(self):
+        return str(self.letters) + " -> " + str(self.count)
+
 def solution(P, Q):
-    letters = [chr(x) for x in range(ord('a'), ord('z') + 1)]
-    letterSelectedCount = {k: [0, {ik: 0 for ik in letters}] for k in letters}
-    stringLength = len(P)
+    orig_stdout = sys.stdout
+    sys.stdout = open(os.devnull, 'w')
 
-    for i in range(stringLength):
-        if P[i] != Q[i]:
-            letterSelectedCount[P[i]][0] += 1
-            letterSelectedCount[P[i]][1][Q[i]] -= 1
+    groups = [ Group(P[0], Q[0], 1) ]
 
-            letterSelectedCount[Q[i]][0] += 1
-            letterSelectedCount[Q[i]][1][P[i]] -= 1
-        else:
-            letterSelectedCount[P[i]][0] += 1
+    for i in range(1, len(P)):
+        letterP = P[i]
+        letterQ = Q[i]
 
-    letterSelectedCount = dict(sorted(letterSelectedCount.items(), key=lambda item: item[1][0]))
+        newGroups = []
 
-    print(letterSelectedCount)
+        print("All new groups start", groups)
 
-    currentCount = 0
-    lettersCount = 0
+        for group in groups:
+            print("Group!!!!", group)
+            print("Letters: ", letterP, ",", letterQ )
 
-    while True:
-        item = letterSelectedCount.popitem()       
-        count = item[1]
-        currentCount += count[0]
-        lettersCount += 1
+            isPInGroup = letterP in group.letters
+            isQInGroup = letterQ in group.letters
 
-        for (letter, discount) in count[1].items():
-            if (letter in letterSelectedCount):
-                letterSelectedCount[letter][0] += discount
+            if isPInGroup and isQInGroup and group.letters[letterP] == letterQ and group.letters[letterQ] == letterP:
+                print("=== Same group, same letters")
+                continue
 
-        if currentCount >= stringLength:
-            break
+            if not isPInGroup and not isQInGroup:
+                print("=== Same group, new letters")
+                if letterP != letterQ:
+                    group.letters[letterP] = letterQ
+                    group.letters[letterQ] = letterP
+                else:
+                    group.letters[letterP] = None
 
-        letterSelectedCount = dict(sorted(letterSelectedCount.items(), key=lambda item: item[1][0]))
-        print("----------------------------")
-        print(letterSelectedCount)
+                group.count += 1
+            elif isPInGroup:
+                print("=== New group with P letter")
 
-    return lettersCount
+                newGroup = copy.deepcopy(group)
+
+                otherLetter = group.letters[letterP]
+                group.letters[letterP] = None
+
+                if otherLetter is not None:
+                    del group.letters[otherLetter]
+
+                del newGroup.letters[letterP]
+                if otherLetter is not None:
+                    newGroup.letters[otherLetter] = None
+                newGroup.letters[letterQ] = None
+                newGroup.count += 1
+
+                newGroups.append(newGroup)
+
+                print("New group", newGroup)
+            elif isQInGroup:
+                print("=== New group with Q letter")
+
+                newGroup = copy.deepcopy(group)
+
+                otherLetter = group.letters[letterQ]
+                group.letters[letterQ] = None
+
+                if otherLetter is not None:
+                    del group.letters[otherLetter]
+
+                del newGroup.letters[letterQ]
+                if otherLetter is not None:
+                    newGroup.letters[otherLetter] = None
+                newGroup.letters[letterP] = None
+                newGroup.count += 1
+
+                newGroups.append(newGroup)
+
+                print("New group", newGroup)
+        
+        print("All new groups", newGroups)
+        if len(newGroups) > 0:
+            groups.extend(newGroups)
+
+    sys.stdout = orig_stdout
+
+    return min(groups, key = lambda group: group.count).count
 
 TestCases = [
+             ['adabca', 'cbdcdb', 3],
              [ "axxz", "yzwy", 2 ],
-            #  [ "ad", "bc", 2 ],
-            #  [ "abc", "bcd", 2 ],
-            #  [ "bacad", "abada", 1 ],
-            #  [ "amz", "amz", 3 ]
+             [ "ad", "bc", 2 ],
+             [ "abc", "bcd", 2 ],
+             [ "bacad", "abada", 1 ],
+             [ "amz", "amz", 3 ],
+             [ "aaadb", "bbbce", 2 ],
+             ['dddabc', 'abcefg', 3], 
+             ['bsqafgiulewghfiaaplskfhjkldsafjhlkafgsdjhluhefdiuahfulidhg', 
+              'bsdafgiulewghficahlskfhjklzfafjhlkafgsdjwluhefdiurhfueidhg', 14] 
             ]
 
 for test in TestCases:
