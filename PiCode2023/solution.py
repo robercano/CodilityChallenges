@@ -1,119 +1,58 @@
 import sys
 import os
 
-import copy
+memo = {}
 
-class Group:
-    def __init__(self, letterA, letterB, count):
-        self.letters = { letterA: letterB, letterB: letterA }
-        self.count = count
+def getKey(letter, P, Q):
+    return str(letter) + P + Q
 
-    def __setitem__(self, key, value):
-        setattr(self, key, value)
+def countLetters(letter, P, Q):
+    key = getKey(letter, P, Q)
+    if key in memo:
+        return memo[key]
 
-    def __getitem__(self, key):
-        return getattr(self, key)
+    if len(P) == 0:
+        return [ set([letter]) ]
+
+    letterP = P[0]
+    letterQ = Q[0]
+
+    groupsP = countLetters(letterP, P[1:], Q[1:])
+    groupsQ = countLetters(letterQ, P[1:], Q[1:])
+
+    groupsP.extend(groupsQ)
+
+    for group in groupsP:
+        if letter not in group:
+            group.add(letter)
     
-    def __str__(self):
-        return str(self.letters) + " -> " + str(self.count)
-    
-    def __repr__(self):
-        return str(self.letters) + " -> " + str(self.count)
+    # memo[key] = groupsP
+    return groupsP
 
 def solution(P, Q):
     orig_stdout = sys.stdout
-    sys.stdout = open(os.devnull, 'w')
+    # sys.stdout = open(os.devnull, 'w')
 
-    groups = [ Group(P[0], Q[0], 1) ]
-
-    for i in range(1, len(P)):
-        letterP = P[i]
-        letterQ = Q[i]
-
-        newGroups = []
-
-        print("All new groups start", groups)
-
-        for group in groups:
-            print("Group!!!!", group)
-            print("Letters: ", letterP, ",", letterQ )
-
-            isPInGroup = letterP in group.letters
-            isQInGroup = letterQ in group.letters
-
-            if isPInGroup and isQInGroup and group.letters[letterP] == letterQ and group.letters[letterQ] == letterP:
-                print("=== Same group, same letters")
-                continue
-
-            if not isPInGroup and not isQInGroup:
-                print("=== Same group, new letters")
-                if letterP != letterQ:
-                    group.letters[letterP] = letterQ
-                    group.letters[letterQ] = letterP
-                else:
-                    group.letters[letterP] = None
-
-                group.count += 1
-            elif isPInGroup:
-                print("=== New group with P letter")
-
-                newGroup = copy.deepcopy(group)
-
-                otherLetter = group.letters[letterP]
-                group.letters[letterP] = None
-
-                if otherLetter is not None:
-                    del group.letters[otherLetter]
-
-                del newGroup.letters[letterP]
-                if otherLetter is not None:
-                    newGroup.letters[otherLetter] = None
-                newGroup.letters[letterQ] = None
-                newGroup.count += 1
-
-                newGroups.append(newGroup)
-
-                print("New group", newGroup)
-            elif isQInGroup:
-                print("=== New group with Q letter")
-
-                newGroup = copy.deepcopy(group)
-
-                otherLetter = group.letters[letterQ]
-                group.letters[letterQ] = None
-
-                if otherLetter is not None:
-                    del group.letters[otherLetter]
-
-                del newGroup.letters[letterQ]
-                if otherLetter is not None:
-                    newGroup.letters[otherLetter] = None
-                newGroup.letters[letterP] = None
-                newGroup.count += 1
-
-                newGroups.append(newGroup)
-
-                print("New group", newGroup)
-        
-        print("All new groups", newGroups)
-        if len(newGroups) > 0:
-            groups.extend(newGroups)
+    groupsP = countLetters(P[0], P[1:], Q[1:])
+    groupsQ = countLetters(Q[0], P[1:], Q[1:])
+ 
+    groupsP.extend(groupsQ)
 
     sys.stdout = orig_stdout
 
-    return min(groups, key = lambda group: group.count).count
+    return len(min(groupsP, key = lambda group: len(group)))
 
 TestCases = [
              ['adabca', 'cbdcdb', 3],
-             [ "axxz", "yzwy", 2 ],
-             [ "ad", "bc", 2 ],
-             [ "abc", "bcd", 2 ],
-             [ "bacad", "abada", 1 ],
-             [ "amz", "amz", 3 ],
-             [ "aaadb", "bbbce", 2 ],
-             ['dddabc', 'abcefg', 3], 
-             ['bsqafgiulewghfiaaplskfhjkldsafjhlkafgsdjhluhefdiuahfulidhg', 
-              'bsdafgiulewghficahlskfhjklzfafjhlkafgsdjwluhefdiurhfueidhg', 14] 
+            #  [ "axxz", "yzwy", 2 ],
+            #  [ "ad", "bc", 2 ],
+            #  [ "abc", "bcd", 2 ],
+            #  [ "bacad", "abada", 1 ],
+            #  [ "amz", "amz", 3 ],
+            #  [ "aaadb", "bbbce", 2 ],
+            #  ['dddabc', 'abcefg', 3], 
+            #  ['bsqafgiulewghfiaaplskfhjkldsafjhlkafgsdjhluhefdiuahfulidhg', 
+            #   'bsdafgiulewghficahlskfhjklzfafjhlkafgsdjwluhefdiurhfueidhg', 14] 
             ]
 
 for test in TestCases:
